@@ -72,129 +72,133 @@ if data is not None:
     tab1, tab2 = st.tabs(["Regression 📈", "Classification 🤖"])
 
     with tab1:
-        target = st.selectbox("Choose the target column (numeric) 🎯",
-                              options=data.select_dtypes(include="number").columns, key="target_reg")
-        st.caption("Pick a numeric column as the target variable for regression.")
-        sim_target = SimpleImputer(strategy="mean")
-        data[target] = sim_target.fit_transform(data[[target]])[:, 0]
-        y = data[target]
-        X = data.drop(target, axis="columns")
+        numerical_cols = data.select_dtypes(include="number").columns
+        if len(categorical_cols) == 0:
+            st.warning("⚠️ No Numerical columns found. Regression cannot be performed.")
+        else:
+            target = st.selectbox("Choose the target column (numeric) 🎯",
+                                  options=data.select_dtypes(include="number").columns, key="target_reg")
+            st.caption("Pick a numeric column as the target variable for regression.")
+            sim_target = SimpleImputer(strategy="mean")
+            data[target] = sim_target.fit_transform(data[[target]])[:, 0]
+            y = data[target]
+            X = data.drop(target, axis="columns")
+    
+            st.subheader("Final train data")
+            st.write(X.head())
+    
+            numerical_columns = X.select_dtypes(include="number").columns
+            categorical_columns = X.select_dtypes(include="object").columns
 
-        st.subheader("Final train data")
-        st.write(X.head())
-
-        numerical_columns = X.select_dtypes(include="number").columns
-        categorical_columns = X.select_dtypes(include="object").columns
-
-        numerical_pipe = Pipeline(steps=[
-            ("number_prerocessing_mean", SimpleImputer(strategy="mean")),
-            ("number_prerocessing_standard", StandardScaler())
-        ])
-        categorical_pipe = Pipeline(steps=[
-            ("categrical_frequant", SimpleImputer(strategy="most_frequent")),
-            ("one_hot", OneHotEncoder())  
-        ])
-
-        st.subheader("The final shape of the data")
-        preprocissing_data = None
-        if len(numerical_columns) > 0 and len(categorical_columns) > 0:
-            full_transform = ColumnTransformer(transformers=[
-                ("numerical", numerical_pipe, numerical_columns),
-                ("categorical", categorical_pipe, categorical_columns)
+            numerical_pipe = Pipeline(steps=[
+                ("number_prerocessing_mean", SimpleImputer(strategy="mean")),
+                ("number_prerocessing_standard", StandardScaler())
             ])
-            preprocissing_data = full_transform.fit_transform(X)
-            if hasattr(preprocissing_data, "toarray"):
-                preprocissing_data = preprocissing_data.toarray()
-            preprocissing_data = pd.DataFrame(preprocissing_data, columns=full_transform.get_feature_names_out())
-            st.write(preprocissing_data.head(10))
-        elif len(numerical_columns) > 0:
-            partial_transform_1 = ColumnTransformer(transformers=[
-                ("numerical", numerical_pipe, numerical_columns),
-            ])    
-            preprocissing_data = partial_transform_1.fit_transform(X)
-            if hasattr(preprocissing_data, "toarray"):
-                preprocissing_data = preprocissing_data.toarray()
-            preprocissing_data = pd.DataFrame(preprocissing_data, columns=partial_transform_1.get_feature_names_out())
-            st.write(preprocissing_data.head(10))
-        elif len(categorical_columns) > 0:
-            partial_transform_2 = ColumnTransformer(transformers=[
-                ("categorical", categorical_pipe, categorical_columns) 
-            ])        
-            preprocissing_data = partial_transform_2.fit_transform(X)
-            if hasattr(preprocissing_data, "toarray"):
-                preprocissing_data = preprocissing_data.toarray()
-            preprocissing_data = pd.DataFrame(preprocissing_data, columns=partial_transform_2.get_feature_names_out())
-            st.write(preprocissing_data.head(10))
-        else:
-            st.warning("The columns are not enough to train the data")
+            categorical_pipe = Pipeline(steps=[
+                ("categrical_frequant", SimpleImputer(strategy="most_frequent")),
+                ("one_hot", OneHotEncoder())  
+            ])
 
-        model_choosed = st.selectbox("Choose regression model 🤖",
-                                     options=["Linear_Regression", "Random_Forest", "XGBOOST_reg", "Gradient Boost reg"],
-                                     key="model_reg")
-        st.caption("Select which regression model you want to train on your data.")
+            st.subheader("The final shape of the data")
+            preprocissing_data = None
+            if len(numerical_columns) > 0 and len(categorical_columns) > 0:
+                full_transform = ColumnTransformer(transformers=[
+                    ("numerical", numerical_pipe, numerical_columns),
+                    ("categorical", categorical_pipe, categorical_columns)
+                ])
+                preprocissing_data = full_transform.fit_transform(X)
+                if hasattr(preprocissing_data, "toarray"):
+                    preprocissing_data = preprocissing_data.toarray()
+                preprocissing_data = pd.DataFrame(preprocissing_data, columns=full_transform.get_feature_names_out())
+                st.write(preprocissing_data.head(10))
+            elif len(numerical_columns) > 0:
+                partial_transform_1 = ColumnTransformer(transformers=[
+                    ("numerical", numerical_pipe, numerical_columns),
+                ])    
+                preprocissing_data = partial_transform_1.fit_transform(X)
+                if hasattr(preprocissing_data, "toarray"):
+                    preprocissing_data = preprocissing_data.toarray()
+                preprocissing_data = pd.DataFrame(preprocissing_data, columns=partial_transform_1.get_feature_names_out())
+                st.write(preprocissing_data.head(10))
+            elif len(categorical_columns) > 0:
+                partial_transform_2 = ColumnTransformer(transformers=[
+                    ("categorical", categorical_pipe, categorical_columns) 
+                ])        
+                preprocissing_data = partial_transform_2.fit_transform(X)
+                if hasattr(preprocissing_data, "toarray"):
+                    preprocissing_data = preprocissing_data.toarray()
+                preprocissing_data = pd.DataFrame(preprocissing_data, columns=partial_transform_2.get_feature_names_out())
+                st.write(preprocissing_data.head(10))
+            else:
+                st.warning("The columns are not enough to train the data")
+    
+            model_choosed = st.selectbox("Choose regression model 🤖",
+                                         options=["Linear_Regression", "Random_Forest", "XGBOOST_reg", "Gradient Boost reg"],
+                                         key="model_reg")
+            st.caption("Select which regression model you want to train on your data.")
+    
+            ratio = st.slider("Choose test data percentage 📊", min_value=5, max_value=95, key="split_ratio_reg")
+            st.caption("Select the percentage of data to be used as test set.")
+            train_data, test_data, train_target, test_target = train_test_split(preprocissing_data, y, test_size=ratio/100, shuffle=True)
+    
+            if model_choosed == "Linear_Regression":
+                model = LinearRegression()
+                model.fit(train_data, train_target)
+                predict_values = model.predict(test_data)
 
-        ratio = st.slider("Choose test data percentage 📊", min_value=5, max_value=95, key="split_ratio_reg")
-        st.caption("Select the percentage of data to be used as test set.")
-        train_data, test_data, train_target, test_target = train_test_split(preprocissing_data, y, test_size=ratio/100, shuffle=True)
+            elif model_choosed == "Gradient Boost reg":
+                n_estimators = st.number_input("n_estimators 🔢", min_value=50, max_value=1000, value=100, step=50, key="gb_n")
+                learning_rate = st.slider("learning_rate ⚡", min_value=0.01, max_value=1.0, value=0.1, step=0.01, key="gb_lr")
+                max_depth = st.selectbox("max_depth 📏", options=[2, 3, 5, 7, 10], key="gb_depth")
+                subsample = st.slider("subsample 🌐", min_value=0.5, max_value=1.0, value=1.0, step=0.1, key="gb_sub")
+                criterion = st.selectbox("criterion 📝", options=["squared_error", "friedman_mse", "absolute_error", "poisson"], key="gb_cri")
+                loss = st.selectbox("loss 🔧", options=["squared_error", "absolute_error", "huber", "quantile"], key="gb_loss")
+                model = GradientBoostingRegressor(
+                    n_estimators=n_estimators,
+                    learning_rate=learning_rate,
+                    max_depth=max_depth,
+                    subsample=subsample,
+                    criterion=criterion,
+                    loss=loss,
+                    random_state=42
+                )
+                model.fit(train_data, train_target)
+                predict_values = model.predict(test_data)
 
-        if model_choosed == "Linear_Regression":
-            model = LinearRegression()
-            model.fit(train_data, train_target)
-            predict_values = model.predict(test_data)
+            elif model_choosed == "XGBOOST_reg":
+                from xgboost import XGBRegressor
+                model = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
+                model.fit(train_data, train_target)
+                predict_values = model.predict(test_data)
+    
+            elif model_choosed == "Random_Forest":
+                from sklearn.ensemble import RandomForestRegressor
+                model = RandomForestRegressor(n_estimators=100, random_state=42)
+                model.fit(train_data, train_target)
+                predict_values = model.predict(test_data)
+                      
+            choosed_accuracy = st.selectbox("Choose regression metric 📈",
+                                            options=["mean_absolute_error", "mean_squared_error", "r2_score"],
+                                            key="acc_reg")
+            st.caption("Pick the metric to evaluate your regression model.")
 
-        elif model_choosed == "Gradient Boost reg":
-            n_estimators = st.number_input("n_estimators 🔢", min_value=50, max_value=1000, value=100, step=50, key="gb_n")
-            learning_rate = st.slider("learning_rate ⚡", min_value=0.01, max_value=1.0, value=0.1, step=0.01, key="gb_lr")
-            max_depth = st.selectbox("max_depth 📏", options=[2, 3, 5, 7, 10], key="gb_depth")
-            subsample = st.slider("subsample 🌐", min_value=0.5, max_value=1.0, value=1.0, step=0.1, key="gb_sub")
-            criterion = st.selectbox("criterion 📝", options=["squared_error", "friedman_mse", "absolute_error", "poisson"], key="gb_cri")
-            loss = st.selectbox("loss 🔧", options=["squared_error", "absolute_error", "huber", "quantile"], key="gb_loss")
-            model = GradientBoostingRegressor(
-                n_estimators=n_estimators,
-                learning_rate=learning_rate,
-                max_depth=max_depth,
-                subsample=subsample,
-                criterion=criterion,
-                loss=loss,
-                random_state=42
-            )
-            model.fit(train_data, train_target)
-            predict_values = model.predict(test_data)
-
-        elif model_choosed == "XGBOOST_reg":
-            from xgboost import XGBRegressor
-            model = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
-            model.fit(train_data, train_target)
-            predict_values = model.predict(test_data)
-
-        elif model_choosed == "Random_Forest":
-            from sklearn.ensemble import RandomForestRegressor
-            model = RandomForestRegressor(n_estimators=100, random_state=42)
-            model.fit(train_data, train_target)
-            predict_values = model.predict(test_data)
-                  
-        choosed_accuracy = st.selectbox("Choose regression metric 📈",
-                                        options=["mean_absolute_error", "mean_squared_error", "r2_score"],
-                                        key="acc_reg")
-        st.caption("Pick the metric to evaluate your regression model.")
-
-        if choosed_accuracy == "mean_absolute_error":
-            st.subheader("MAE:")
-            st.write(mean_absolute_error(test_target, predict_values))
-        elif choosed_accuracy == "mean_squared_error":
-            st.subheader("MSE:")
-            st.write(mean_squared_error(test_target, predict_values))
-        else:
-            st.subheader("R2 Score:")
-            st.write(r2_score(test_target, predict_values))
-
-        # visualize
-        x_axis = np.arange(0, len(test_target))
-        import plotly.graph_objects as go
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=x_axis, y=predict_values, mode="lines+markers", name="Predictions"))
-        fig.add_trace(go.Scatter(x=x_axis, y=test_target, mode="lines+markers", name="Actual"))
-        st.plotly_chart(fig, use_container_width=True)
+            if choosed_accuracy == "mean_absolute_error":
+                st.subheader("MAE:")
+                st.write(mean_absolute_error(test_target, predict_values))
+            elif choosed_accuracy == "mean_squared_error":
+                st.subheader("MSE:")
+                st.write(mean_squared_error(test_target, predict_values))
+            else:
+                st.subheader("R2 Score:")
+                st.write(r2_score(test_target, predict_values))
+    
+            # visualize
+            x_axis = np.arange(0, len(test_target))
+            import plotly.graph_objects as go
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=x_axis, y=predict_values, mode="lines+markers", name="Predictions"))
+            fig.add_trace(go.Scatter(x=x_axis, y=test_target, mode="lines+markers", name="Actual"))
+            st.plotly_chart(fig, use_container_width=True)
 
 
 # -----------------------------------------------------------------------------------
