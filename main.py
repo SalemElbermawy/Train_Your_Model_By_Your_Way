@@ -73,7 +73,7 @@ if data is not None:
 
     with tab1:
         numerical_cols = data.select_dtypes(include="number").columns
-        if len(categorical_cols) == 0:
+        if len(numerical_cols) == 0:
             st.warning("⚠️ No Numerical columns found. Regression cannot be performed.")
         else:
             target = st.selectbox("Choose the target column (numeric) 🎯",
