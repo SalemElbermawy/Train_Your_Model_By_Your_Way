@@ -21,7 +21,7 @@ st.set_page_config(
 
 st.markdown("""
 <div style="background-color:#1f1f1f; padding: 15px; border-radius: 12px; color:white;">
-<h1 style="color:#00bfff; text-align:center;">🤖 Train Your Model with Your Way</h1>
+<h1 style="color:#00bfff; text-align:center;">🤖 Train Your Model By Your Way</h1>
 <p style="text-align:center; font-size:16px; color:white;">
 Upload your dataset and experiment with different machine learning models for <b>Regression</b> and <b>Classification</b>. 
 Visualize predictions, measure accuracy, and explore your data easily! 🌟
